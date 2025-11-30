@@ -1,0 +1,42 @@
+Yuda Kusuma
+00000110913
+LAB_WEEK_11 Assignment
+
+1. When a user takes a picture, that picture is stored in a path based on the given URI. In which part of the code handles this?
+
+Jawaban: Bagian kode yang menangani penyimpanan gambar berdasarkan URI berada di class ProviderFileManager, khususnya pada method insertToStore():
+
+private fun insertToStore(fileInfo: FileInfo, contentUri: Uri, contentValues: ContentValues) {
+    executor.execute {
+        val insertedUri = contentResolver.insert(contentUri, contentValues)
+        insertedUri?.let {
+            val inputStream = contentResolver.openInputStream(fileInfo.uri)
+            val outputStream = contentResolver.openOutputStream(insertedUri)
+            IOUtils.copy(inputStream, outputStream)
+        }
+    }
+}
+
+2. In your FileInfo.kt, there are 5 attributes. On the first attribute, what does the URI refer to? And on the fourth attribute, what does relativePath refer to?
+
+Jawaban:
+- Attribute pertama (uri): Merujuk pada URI yang digunakan untuk mengakses file secara temporary melalui FileProvider. URI ini memberikan akses terbatas ke aplikasi lain untuk mengakses file.
+- Attribute keempat (relativePath): Merujuk pada path relatif di dalam external storage di mana file akan disimpan. Untuk gambar, ini biasanya "Pictures" dan untuk video "Movies".
+
+3. [Bonus] Explain the chronological order from when a user takes a picture until the file is stored in the MediaStore.
+
+1. ProviderFileManager.generatePhotoUri(time) membuat sebuah File di folder external-files aplikasi pada direktori Pictures, lalu mendapatkan temporary content URI melalui FileProvider.getUriForFile(...). URI ini adalah URI yang dapat digunakan aplikasi kamera untuk menulis hasil foto.
+
+2. MainActivity membuka kamera menggunakan ActivityResultContracts.TakePicture() dengan URI sementara tersebut (takePictureLauncher.launch(photoInfo?.uri)).
+
+3. Aplikasi kamera menulis byte gambar ke URI sementara tersebut (yaitu file yang berada di folder external-files milik aplikasi).
+
+4. Setelah kontrak TakePicture selesai, callback hasil aktivitas memanggil providerFileManager.insertImageToStore(photoInfo).
+
+5. insertImageToStore(...) kemudian memanggil insertToStore(fileInfo, imageContentUri, contentValues), yang melakukan:
+   a. Menggunakan ContentResolver.insert(contentUri, contentValues) untuk membuat entri baru di MediaStore dan mendapatkan insertedUri (URI final yang dikelola MediaStore).
+   b. Membuka InputStream dari URI FileProvider sementara (contentResolver.openInputStream(fileInfo.uri)).
+   c. Membuka OutputStream ke URI MediaStore yang baru dibuat (contentResolver.openOutputStream(insertedUri)).
+   d. Menyalin byte dari input ke output (IOUtils.copy), sehingga file disalin ke MediaStore (dan ke lokasi penyimpanan publik seperti DCIM/Pictures sesuai dengan RELATIVE_PATH).
+
+6. File sekarang sudah berada di MediaStore (dan terlihat oleh aplikasi Galeri serta aplikasi lain). File sementara di folder external-files aplikasi mungkin tetap ada kecuali dihapus secara manual.
