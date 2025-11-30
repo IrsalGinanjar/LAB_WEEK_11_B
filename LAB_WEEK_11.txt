@@ -1,5 +1,6 @@
-Yuda Kusuma
-00000110913
+Muhammad Irsal Ginanjar
+00000110698
+
 LAB_WEEK_11 Assignment
 
 1. When a user takes a picture, that picture is stored in a path based on the given URI. In which part of the code handles this?
